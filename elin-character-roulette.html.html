@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elin キャラ作成ルーレット</title>
+<style>
+:root { color-scheme: light dark; --bg: light-dark(#f4f0e7,#171a19); --panel: light-dark(#fffdf7,#222725); --panel2: light-dark(#f0eadc,#2c322e); --ink: light-dark(#292d27,#f0f0e7); --muted: light-dark(#73766b,#b0b5a8); --line: light-dark(#d9d2c2,#454d45); --accent: light-dark(#47745c,#9cc8a6); --accent-ink: light-dark(#fff,#17251b); --gold: light-dark(#b1843b,#d6b46c); }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,"Yu Gothic UI",Meiryo,sans-serif; line-height:1.55; }
+#app { min-height:100vh; background-color:var(--bg); padding:clamp(16px,3vw,34px); }
+.wrap { max-width:1060px; margin:auto; }
+header { padding:12px 0 24px; border-bottom:1px solid var(--line); margin-bottom:24px; }
+.eyebrow { color:var(--accent); font-size:.78rem; font-weight:800; letter-spacing:.16em; }
+h1 { font-size:clamp(1.65rem,4vw,2.6rem); line-height:1.2; margin:.35rem 0 .65rem; letter-spacing:.02em; }
+.lead { max-width:700px; color:var(--muted); margin:0; }
+.results { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:22px 0 28px; }
+.result { background:var(--panel); border:1px solid var(--line); border-radius:15px; padding:17px; min-width:0; box-shadow:0 3px 0 light-dark(#e8e0d0,#171b18); }
+.result-label { color:var(--muted); font-size:.82rem; font-weight:700; }
+.result-value { font-size:clamp(1.2rem,2.5vw,1.7rem); font-weight:800; margin:7px 0 14px; overflow-wrap:anywhere; }
+.result-value.free { color:var(--muted); font-weight:600; }
+.result button, .primary, .secondary { border:0; border-radius:9px; padding:10px 14px; font:inherit; font-weight:750; cursor:pointer; transition:transform .12s,filter .12s; }
+button:hover { filter:brightness(1.05); } button:active { transform:translateY(1px); }
+.result button, .primary { background:var(--accent); color:var(--accent-ink); }
+.secondary { background:var(--panel2); color:var(--ink); border:1px solid var(--line); }
+.section-title { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 12px; }
+h2 { font-size:1.15rem; margin:0; }
+.section-title small { color:var(--muted); }
+.settings { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:17px; min-width:0; }
+.card h3 { margin:0 0 12px; font-size:1.05rem; }
+.checks { display:grid; gap:9px; margin-bottom:15px; }
+label.check { display:flex; gap:9px; align-items:flex-start; font-size:.9rem; }
+input[type=checkbox] { accent-color:var(--accent); width:17px; height:17px; margin-top:3px; flex:0 0 auto; }
+textarea { width:100%; min-height:88px; padding:10px; border:1px solid var(--line); border-radius:9px; background:var(--bg); color:var(--ink); font:inherit; font-size:.9rem; resize:vertical; }
+.field-label { display:block; font-size:.85rem; font-weight:750; margin:12px 0 6px; }
+.hint { color:var(--muted); font-size:.8rem; margin:6px 0 0; }
+details { margin-top:20px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+summary { cursor:pointer; font-weight:750; }
+.editor-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:14px; }
+.editor-grid textarea { min-height:155px; }
+.actions { display:flex; flex-wrap:wrap; gap:9px; margin:16px 0 0; }
+.notice { background:var(--panel2); border-left:3px solid var(--gold); border-radius:7px; padding:12px 14px; margin-top:20px; color:var(--muted); font-size:.88rem; }
+footer { color:var(--muted); font-size:.78rem; padding:22px 0 8px; }
+@media(max-width:760px) { .settings,.editor-grid { grid-template-columns:1fr; } .results { grid-template-columns:1fr; } .result { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px 12px; } .result-label { grid-column:1 / -1; } .result-value { margin:0; } .result button { grid-column:2; grid-row:2; } }
+</style>
+</head>
+<body><main id="app"><div class="wrap">
+<header><div class="eyebrow">ELIN · CHARACTER RANDOMIZER</div><h1>キャラ作成ルーレット</h1><p class="lead">次の冒険者を、少し運に任せてみる。種族・職業・信仰をそれぞれ独立して抽選できます。</p></header>
+<div class="section-title"><h2>今回の候補</h2><small>抽選していない項目は「自由」のまま</small></div>
+<section class="results" aria-label="抽選結果">
+<div class="result"><div class="result-label">種族</div><div class="result-value free" id="raceResult">自由</div><button onclick="draw('race')">種族を抽選</button></div>
+<div class="result"><div class="result-label">職業</div><div class="result-value free" id="jobResult">自由</div><button onclick="draw('job')">職業を抽選</button></div>
+<div class="result"><div class="result-label">信仰</div><div class="result-value free" id="faithResult">自由</div><button onclick="draw('faith')">信仰を抽選</button></div>
+</section>
+<div class="section-title"><h2>抽選の設定</h2><small>設定を変えてから抽選ボタンを押してください</small></div>
+<section class="settings">
+<div class="card"><h3>種族の候補</h3><div class="checks">
+<label class="check"><input id="raceExtra" type="checkbox" checked>追加種族を含める</label>
+<label class="check"><input id="raceNpc" type="checkbox">NPC専用種族を含める（実験的）</label>
+</div><label class="field-label" for="raceMods">MOD追加種族</label><textarea id="raceMods" placeholder="例：MODで追加された種族\n1行につき1候補"></textarea><p class="hint">下の「候補リストを編集」で、初期候補も変更できます。</p></div>
+<div class="card"><h3>職業の候補</h3><div class="checks">
+<label class="check"><input id="jobExtra" type="checkbox" checked>追加職業を含める</label>
+<label class="check"><input id="jobNpc" type="checkbox">NPC専用職業を含める（実験的）</label>
+</div><label class="field-label" for="jobMods">MOD追加職業</label><textarea id="jobMods" placeholder="例：MODで追加された職業\n1行につき1候補"></textarea><p class="hint">追加職業を使わない場合はチェックを外します。</p></div>
+<div class="card"><h3>信仰の候補</h3><p class="hint">信仰は追加候補のチェックを設けず、MOD分を手動追加する方式です。</p><label class="field-label" for="faithMods">MOD追加信仰</label><textarea id="faithMods" placeholder="例：MODで追加された信仰\n1行につき1候補"></textarea><p class="hint">信仰を決めたくないときは、抽選ボタンを押さず「自由」のままでOK。</p></div>
+</section>
+<details><summary>候補リストを編集（初期候補・追加候補・NPC専用候補）</summary><p class="hint">ゲームやMOD環境による違いに合わせて、候補を自由に編集できます。1行に1候補。ここでの初期リストは試作用のたたき台で、最新のゲーム内一覧を保証するものではありません。</p>
+<div class="editor-grid">
+<div><label class="field-label" for="raceBase">通常の種族</label><textarea id="raceBase"></textarea><label class="field-label" for="raceExtraList">追加種族</label><textarea id="raceExtraList"></textarea><label class="field-label" for="raceNpcList">NPC専用種族</label><textarea id="raceNpcList"></textarea></div>
+<div><label class="field-label" for="jobBase">通常の職業</label><textarea id="jobBase"></textarea><label class="field-label" for="jobExtraList">追加職業</label><textarea id="jobExtraList"></textarea><label class="field-label" for="jobNpcList">NPC専用職業</label><textarea id="jobNpcList"></textarea></div>
+<div><label class="field-label" for="faithBase">通常の信仰</label><textarea id="faithBase"></textarea><p class="hint">MOD追加信仰は上の信仰欄に入力してください。</p></div>
+</div>
+<div class="actions"><button class="secondary" onclick="restoreDefaults()">初期候補に戻す</button><button class="secondary" onclick="exportSettings()">設定を書き出す</button><button class="secondary" onclick="document.getElementById('importFile').click()">設定を読み込む</button><input id="importFile" type="file" accept="application/json,.json" hidden onchange="importSettings(event)"></div>
+</details>
+<div class="actions"><button class="primary" onclick="drawAll()">3項目をまとめて抽選</button><button class="secondary" onclick="resetResults()">結果をすべて自由に戻す</button></div>
+<div class="notice"><strong>試作品について：</strong>候補リストは編集可能です。初期候補には仮の一覧が入っています。実際に使う前に、現在のElin本編の選択肢や使用中のMODに合わせて確認・修正してください。設定の書き出し機能を使えば、入力した候補をJSONファイルとして保存できます。</div>
+<footer>個人用のキャラ作成補助ツール案 · 抽選は各候補を同じ確率で選びます。</footer>
+</div></main>
+<script>
+const defaults = {
+ raceBase: ['イエルス','エウダーナ','妖精','丘の民','ジューア','エレア','カオスシェイプ','かたつむり','リッチ'],
+ raceExtraList: ['幽鬼','ゴーレム','スライム','ミフ','ネフ','サキュバス','吸血鬼','半神','ケンタウロス'], raceNpcList: ['シバ','古代蟹','ラトキン','人狼','ゴブリン','コボルト','オーク','トロール','リザードマン','ミノタウロス','ノーランド','阿修羅','狼','ゾンビ','ウサギ','ラビアン','羊','蛙','ムカデ','マンドレイク','甲虫','きのこ','コウモリ','エント','猟犬','幽霊','精霊','目','ワイバーン','ワスプ','巨人','インプ','手','蛇','ドレイク','熊','鎧','メデューサ','キューピット','ファントム','ハーピー','ドラゴン','恐竜','エイリアン','ケルベロス','蜘蛛','岩','蟹','骸骨','駒','猫','犬','ローラン','人魚','ねずみ','やどかり','機械','ウィスプ','鶏','ストーカー','イーク','イス','タコ','馬','クイックリング','メタル','バイク','魚','豚','妹猫','使途','神'],
+ jobBase: ['戦士','遺跡荒らし','魔法使い','農民','狩人','魔法戦士','観光客','ピアニスト','神官','機工兵'],
+ jobExtraList: ['異端審問官','パラディン','処刑人','陰陽師','魔女'], jobNpcList: ['プレデター','唄い手','錬金術師','防衛者','なし'],
+ faithBase: ['エヘカトル','クミロミ','ルルウィ','マニ','ジュア','イツパロトル','オパートス','イーヴァン','キズアミ','ホロメ','信仰リレー','エイス']
+};
+const ids = Object.keys(defaults).concat(['raceMods','jobMods','faithMods']);
+function setLines(id, lines) { document.getElementById(id).value = lines.filter(Boolean).join('\n'); }
+function lines(id) { return document.getElementById(id).value.split(/[\n,、，]/).map(s=>s.trim()).filter(Boolean); }
+function unique(list) { return [...new Set(list.map(x=>x.trim()).filter(Boolean))]; }
+function candidates(type) {
+ let out = lines(type+'Base');
+ if(type==='race'||type==='job') {
+   if(document.getElementById(type+'Extra').checked) out.push(...lines(type+'ExtraList'));
+   if(document.getElementById(type+'Npc').checked) out.push(...lines(type+'NpcList'));
+ }
+ out.push(...lines(type+'Mods'));
+ return unique(out);
+}
+function draw(type) {
+ const opts=candidates(type);
+ if(!opts.length) { alert('抽選候補がありません。候補リストを入力してください。'); return; }
+ const value=opts[Math.floor(Math.random()*opts.length)];
+ const el=document.getElementById(type+'Result'); el.textContent=value; el.classList.remove('free');
+}
+function drawAll() { ['race','job','faith'].forEach(draw); }
+function resetResults() { ['race','job','faith'].forEach(t=>{const e=document.getElementById(t+'Result');e.textContent='自由';e.classList.add('free');}); }
+function restoreDefaults() { for(const [id,vals] of Object.entries(defaults)) setLines(id, vals); ['raceMods','jobMods','faithMods'].forEach(id=>document.getElementById(id).value=''); }
+function exportSettings() {
+ const data={}; ids.forEach(id=>data[id]=document.getElementById(id).value);
+ ['raceExtra','raceNpc','jobExtra','jobNpc'].forEach(id=>data[id]=document.getElementById(id).checked);
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='elin-roulette-settings.json'; a.click(); URL.revokeObjectURL(url);
+}
+function importSettings(event) {
+ const file=event.target.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=()=>{try{const d=JSON.parse(reader.result); ids.forEach(id=>{if(typeof d[id]==='string')document.getElementById(id).value=d[id];}); ['raceExtra','raceNpc','jobExtra','jobNpc'].forEach(id=>{if(typeof d[id]==='boolean')document.getElementById(id).checked=d[id];}); alert('設定を読み込みました。');}catch(e){alert('設定ファイルを読み込めませんでした。JSONファイルを確認してください。');}}; reader.readAsText(file); event.target.value='';
+}
+restoreDefaults();
+</script></body></html>
